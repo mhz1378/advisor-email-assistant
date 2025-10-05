@@ -1,0 +1,235 @@
+{
+  "name": "Daily Digest",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 20
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "30b432fb-6a6c-4105-b329-b2a60642cc8b",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1VZnptcvGVhGEow_Gx38yB2Wq8UzY2Hnj8RxzerJvBHU",
+          "mode": "list",
+          "cachedResultName": "Uni Inbox",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VZnptcvGVhGEow_Gx38yB2Wq8UzY2Hnj8RxzerJvBHU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Inbox 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VZnptcvGVhGEow_Gx38yB2Wq8UzY2Hnj8RxzerJvBHU/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        0
+      ],
+      "id": "ac906123-2c76-454e-b03b-4d9b9aabca02",
+      "name": "Read Rows",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eLYqfNJNiXdlBlwF",
+          "name": "Main Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map(i => i.json);\nconst total = rows.length;\nconst high = rows.filter(r => Number(r.priority) >= 4).length;\nconst pending = rows.filter(r => r.subTag === 'Action Required').length;\n\nreturn [{\n  json: {\n    total,\n    high,\n    pending,\n    categories: [...new Set(rows.map(r => r.category))].join(', '),\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "519a728f-db69-43fb-aa8a-9a8995017822",
+      "name": "Aggregate Statistics"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1VZnptcvGVhGEow_Gx38yB2Wq8UzY2Hnj8RxzerJvBHU",
+          "mode": "list",
+          "cachedResultName": "Uni Inbox",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VZnptcvGVhGEow_Gx38yB2Wq8UzY2Hnj8RxzerJvBHU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1692019988,
+          "mode": "list",
+          "cachedResultName": "Daily Digest Logs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VZnptcvGVhGEow_Gx38yB2Wq8UzY2Hnj8RxzerJvBHU/edit#gid=1692019988"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Total emails",
+              "displayName": "Total emails",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "High priority",
+              "displayName": "High priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Pending (Action Required)",
+              "displayName": "Pending (Action Required)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Categories today",
+              "displayName": "Categories today",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        832,
+        0
+      ],
+      "id": "d5763ffd-5cc7-4af3-86ee-e02af547491e",
+      "name": "Daily Digest Log",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eLYqfNJNiXdlBlwF",
+          "name": "Main Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "=74166550",
+        "text": "=🌅 *Daily Email Digest*\nTotal emails: {{$json.total}}\nHigh priority: {{$json.high}}\nPending (Action Required): {{$json.pending}}\nCategories today: {{$json.categories}}\n",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "c5738df6-0c14-4fc8-96ca-e68d19030dda",
+      "name": "Daily Digest Message",
+      "webhookId": "dd3ece16-e08b-44b6-98f0-7d997873d55d",
+      "credentials": {
+        "telegramApi": {
+          "id": "PEoTj5wxpFTeQVpI",
+          "name": "Ticket Intake"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Read Rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Rows": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Statistics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Statistics": {
+      "main": [
+        [
+          {
+            "node": "Daily Digest Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Digest Message": {
+      "main": [
+        [
+          {
+            "node": "Daily Digest Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9182b3f9-45f5-4fa8-8ecb-b7a6af3591dc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9c8d0d4640139c59e2bc183c0a14df0fbc0573cb91e494f5db8144fe78fe28ca"
+  },
+  "id": "cpAJEmup2Ogwj5fi",
+  "tags": []
+}

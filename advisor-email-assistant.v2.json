@@ -1,0 +1,698 @@
+{
+  "name": "advisor-email-assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "includeSpamTrash": true,
+          "labelIds": [
+            "INBOX"
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -208,
+        0
+      ],
+      "id": "7a4e9a98-b434-41a9-8976-6461ed2658a6",
+      "name": "New Email (Inbox)",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "defo4ASTweJVhM70",
+          "name": "Uni Account"
+        }
+      },
+      "notes": "Pull new emails as they arrive."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2c9bceda-e75c-4f70-8dc3-1a04cad9f933",
+              "name": "messageId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "7ab7a153-3ee6-4da4-95b8-773affc4f64b",
+              "name": "from",
+              "value": "={{ $json.From }}",
+              "type": "string"
+            },
+            {
+              "id": "020c727f-d355-4a74-85ac-702beccfbe18",
+              "name": "subject",
+              "value": "={{ $json.Subject }}",
+              "type": "string"
+            },
+            {
+              "id": "76881c49-4108-46db-b353-7016ed08ad9a",
+              "name": "snippet",
+              "value": "={{$json.snippet || \"\"}}",
+              "type": "string"
+            },
+            {
+              "id": "d72b64bf-278d-4d7c-bfaa-9120f4528f4d",
+              "name": "threadId",
+              "value": "={{ $json.threadId }}",
+              "type": "string"
+            },
+            {
+              "id": "a0f1b28c-8942-40d5-a4b3-da2b35c358e9",
+              "name": "gmailId",
+              "value": "={{$json.id}}",
+              "type": "string"
+            },
+            {
+              "id": "45003719-37ff-45e4-876e-5e900447caeb",
+              "name": "epochMs",
+              "value": "={{ +$json.internalDate || Date.now() }}",
+              "type": "number"
+            },
+            {
+              "id": "1ab4812c-d11d-4b45-93b8-a2df402aee44",
+              "name": "receivedAt",
+              "value": "={{ new Date((+$json.internalDate || Date.now())).toLocaleString('en-US', {\n  year: 'numeric',\n  month: 'short',\n  day: 'numeric',\n  hour: '2-digit',\n  minute: '2-digit',\n  hour12: true,\n  timeZone: 'Europe/Istanbul'\n}) }}",
+              "type": "string"
+            },
+            {
+              "id": "0fb6e30a-5315-4243-a6aa-f16d61a8187c",
+              "name": "dedupeKey",
+              "value": "={{$json.threadId || $json.id}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a9f89a9e-f164-4dc3-82ca-241ca18e086e",
+      "name": "Normalize Email Fields"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1VZnptcvGVhGEow_Gx38yB2Wq8UzY2Hnj8RxzerJvBHU",
+          "mode": "list",
+          "cachedResultName": "Uni Inbox",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VZnptcvGVhGEow_Gx38yB2Wq8UzY2Hnj8RxzerJvBHU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Inbox 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VZnptcvGVhGEow_Gx38yB2Wq8UzY2Hnj8RxzerJvBHU/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1504,
+        0
+      ],
+      "id": "4f212b15-89da-4621-aaea-08bc83b06388",
+      "name": "Lookup: Existing dedupeKey",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eLYqfNJNiXdlBlwF",
+          "name": "Main Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c384c660-651c-4047-b803-bb63a1c3f0ed",
+              "leftValue": "={{ Object.keys($json).length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1808,
+        0
+      ],
+      "id": "9e77bf91-ddc7-4a3c-bffd-1b62926355ff",
+      "name": "Is Duplicate?",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1VZnptcvGVhGEow_Gx38yB2Wq8UzY2Hnj8RxzerJvBHU",
+          "mode": "list",
+          "cachedResultName": "Uni Inbox",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VZnptcvGVhGEow_Gx38yB2Wq8UzY2Hnj8RxzerJvBHU/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Inbox 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1VZnptcvGVhGEow_Gx38yB2Wq8UzY2Hnj8RxzerJvBHU/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "receivedAt": "={{ $('Normalize Email Fields').item.json.receivedAt }}",
+            "from": "={{ $('Normalize Email Fields').item.json.from }}",
+            "subject": "={{ $('Normalize Email Fields').item.json.subject }}",
+            "dedupeKey": "={{ $('Normalize Email Fields').item.json.dedupeKey }}",
+            "gmailId": "={{ $('Normalize Email Fields').item.json.gmailId }}",
+            "threadId": "={{ $('Normalize Email Fields').item.json.threadId }}",
+            "reasons": "={{ $('Parse LLM Priority JSON').item.json.reasons }}",
+            "tags": "={{ $('Parse LLM Classification JSON').item.json.message.content.tags }}",
+            "priority": "={{ $('Parse LLM Priority JSON').item.json.priority }}",
+            "summary": "={{ $json.summary }}",
+            "classificationReasons": "={{ $('Parse LLM Classification JSON').item.json.classificationReasons }}",
+            "classifierConfidence": "={{ $('Parse LLM Classification JSON').item.json.classifierConfidence }}",
+            "classifierSource": "={{ $('Parse LLM Classification JSON').item.json.classifierSource }}",
+            "subTag": "={{ $('Parse LLM Classification JSON').item.json.subTag }}",
+            "category": "={{ $('Parse LLM Classification JSON').item.json.category }}"
+          },
+          "matchingColumns": [
+            "receivedAt"
+          ],
+          "schema": [
+            {
+              "id": "receivedAt",
+              "displayName": "receivedAt",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "from",
+              "displayName": "from",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "subject",
+              "displayName": "subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tags",
+              "displayName": "tags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reasons",
+              "displayName": "reasons",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "threadId",
+              "displayName": "threadId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "gmailId",
+              "displayName": "gmailId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "dedupeKey",
+              "displayName": "dedupeKey",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "subTag",
+              "displayName": "subTag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "classifierSource",
+              "displayName": "classifierSource",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "classifierConfidence",
+              "displayName": "classifierConfidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "classificationReasons",
+              "displayName": "classificationReasons",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2592,
+        96
+      ],
+      "id": "e0c15c9d-e7cc-48c9-b776-9cb0881da34e",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eLYqfNJNiXdlBlwF",
+          "name": "Main Sheets"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"category\": \"{{$('Parse LLM Classification JSON').item.json.category || 'Uncategorized'}}\",\n  \"subTag\": \"{{$('Parse LLM Classification JSON').item.json.subTag || 'Read Later'}}\",\n  \"classifierSource\": \"{{$('Parse LLM Classification JSON').item.json.classifierSource || 'default:v0'}}\",\n  \"classifierConfidence\": \"{{$('Parse LLM Classification JSON').item.json.classifierConfidence || 0.5}}\",\n  \"classificationReasons\": \"{{$json.classificationReasons || 'Bootstrap default until classifier active'}}\",\n  \"summary\": \"{{$('Parse LLM Classification JSON').item.json.summary || 'No summary generated'}}\",\n  \"summarizerSource\": \"{{$('Parse LLM Classification JSON').item.json.summarizerSource || 'default:v0'}}\"\n}\n",
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2256,
+        96
+      ],
+      "id": "136697a3-2d75-459a-9a5b-33b33ac50aef",
+      "name": "Classification Defaults"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an email triage AI. \nGiven email metadata, decide its urgency on a scale of 1–5 and explain why.\nReturn ONLY valid JSON, nothing else.\n\nInput:\nFrom: {{$json.from}}\nSubject: {{$json.subject}}\nSnippet: {{$json.snippet}}\n\nRules:\n- priority: integer 1–5 (1=very low, 5=urgent/important)\n- reasons: short array of explanations\n- confidence: 0.0–1.0\n\nFormat:\n{\n  \"priority\": <1-5>,\n  \"reasons\": [\"...\"],\n  \"confidence\": <0-1>\n}\n"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {
+          "maxTokens": 300,
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        240,
+        0
+      ],
+      "id": "18539ae7-8198-4a0c-8764-b4cbad868c46",
+      "name": "LLM: Priority Evaluator",
+      "credentials": {
+        "openAiApi": {
+          "id": "VyiA7y79XAEFcarn",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let raw = $json.message?.content || $json.text || $json.response || \"\";\nlet data;\n\ntry {\n  // Case 1: model returned a proper object (already parsed JSON)\n  if (typeof raw === \"object\") {\n    data = raw;\n  } else {\n    // Case 2: model returned stringified JSON\n    const jsonStart = raw.indexOf(\"{\");\n    const jsonEnd = raw.lastIndexOf(\"}\");\n    const clean = raw.slice(jsonStart, jsonEnd + 1);\n    data = JSON.parse(clean);\n  }\n\n  return [\n    {\n      json: {\n        ...$input.item.json,\n        priority: data.priority ?? 1,\n        reasons: Array.isArray(data.reasons)\n          ? data.reasons\n          : [String(data.reasons ?? \"Unknown\")],\n        priorityConfidence: data.confidence ?? 0.5,\n        classifierSource: \"OpenAI:LLM\"\n      }\n    }\n  ];\n} catch (e) {\n  return [\n    {\n      json: {\n        ...$input.item.json,\n        priority: 2,\n        reasons: [\"Parse error or invalid JSON\"],\n        priorityConfidence: 0.2,\n        classifierSource: \"OpenAI:LLM (fallback)\"\n      }\n    }\n  ];\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        0
+      ],
+      "id": "cb2cb6fd-dfaf-45d8-b639-401f6657b42c",
+      "name": "Parse LLM Priority JSON"
+    },
+    {
+      "parameters": {
+        "jsCode": "let raw = $json.message?.content || $json.text || $json.response || \"\";\nlet data;\n\ntry {\n  if (typeof raw === \"object\") {\n    data = raw;\n  } else {\n    const start = raw.indexOf(\"{\");\n    const end = raw.lastIndexOf(\"}\");\n    const clean = raw.slice(start, end + 1);\n    data = JSON.parse(clean);\n  }\n\n  return [\n    {\n      json: {\n        ...$input.item.json,\n        category: data.category || \"Uncategorized\",\n        subTag: data.subTag || \"Read Later\",\n        summary: data.summary || $json.snippet || \"No summary generated\",\n        tags: Array.isArray(data.tags)\n          ? data.tags\n          : (typeof data.tags === \"string\"\n              ? data.tags.split(\",\").map(t => t.trim())\n              : []),\n        classifierSource: \"OpenAI:LLM\",\n        classifierConfidence: data.confidence ?? 0.7,\n        classificationReasons: Array.isArray(data.reasons)\n          ? data.reasons.join(\" | \")\n          : String(data.reasons || \"No reasons given\"),\n        summarizerSource: \"OpenAI:LLM\"\n      }\n    }\n  ];\n} catch (e) {\n  return [\n    {\n      json: {\n        ...$input.item.json,\n        category: \"Uncategorized\",\n        subTag: \"Read Later\",\n        summary: $json.snippet || \"Summary parse error\",\n        tags: [],\n        classifierSource: \"OpenAI:LLM (fallback)\",\n        classifierConfidence: 0.3,\n        classificationReasons: \"Parse error or invalid JSON\",\n        summarizerSource: \"OpenAI:LLM (fallback)\"\n      }\n    }\n  ];\n}\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1152,
+        0
+      ],
+      "id": "95a46322-28e7-425e-a6f1-4dc5b32b4f64",
+      "name": "Parse LLM Classification JSON"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an intelligent email triage assistant.\nYour job is to classify, summarize, and extract key tags from emails.\n\nGiven the email metadata below:\nFrom: {{$json.from}}\nSubject: {{$json.subject}}\nSnippet: {{$json.snippet}}\n\nTasks:\n1. Choose the most appropriate category from:\n   [\"Meetings\", \"Students\", \"Administrative\", \"Urgent\", \"FYI\", \"Events\", \"Uncategorized\"]\n2. Choose one subTag from:\n   [\"Action Required\", \"Read Later\", \"Schedule\", \"Reminder\", \"Announcement\"]\n3. Write a short 1–2 sentence summary.\n4. Extract 3–6 short lowercase keyword-style tags (no spaces, use hyphens if needed).\n5. Return valid JSON ONLY in this format:\n\n{\n  \"category\": \"<category>\",\n  \"subTag\": \"<subTag>\",\n  \"summary\": \"<short summary>\",\n  \"tags\": [\"list\",\"of\",\"tags\"],\n  \"confidence\": 0.0-1.0,\n  \"reasons\": [\"short bullet points why this category/subTag was chosen\"]\n}\n"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        800,
+        0
+      ],
+      "id": "ba313755-9fab-4050-8253-b35bca69214e",
+      "name": "LLM – Smart Classifier + Summarizer",
+      "credentials": {
+        "openAiApi": {
+          "id": "VyiA7y79XAEFcarn",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ffed1a45-c3f2-43ec-9d11-af2aa273fa1c",
+              "leftValue": "={{ $json.subTag }}",
+              "rightValue": "Action Required",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "ee682515-8d87-4899-8e9a-b139b672ff6d",
+              "leftValue": "={{ $json.priority }}",
+              "rightValue": 3,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2800,
+        96
+      ],
+      "id": "5a2441ed-5ab0-4dbb-93c8-65d9ad39bfb0",
+      "name": "Needs Reminder?"
+    },
+    {
+      "parameters": {
+        "chatId": "=74166550",
+        "text": "=📬 *Action Required Email*\nFrom: {{ $json.from.replace(/</g, '').replace(/>/g, '') }}\nSubject: {{ $json.subject }}\nPriority: {{ $json.priority }}\nCategory: {{ $json.category }}\nSummary: {{ $json.summary }}\n<a href=\"https://mail.google.com/mail/u/0/#search/{{ $json.gmailId }}\">Open in Gmail</a>\n",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3008,
+        0
+      ],
+      "id": "ac9eadca-64eb-4535-b599-c3ede7245612",
+      "name": "Telegram Reminder",
+      "webhookId": "96b973f5-7fd3-4906-b94c-44053bbe2293",
+      "credentials": {
+        "telegramApi": {
+          "id": "PEoTj5wxpFTeQVpI",
+          "name": "Ticket Intake"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "New Email (Inbox)": {
+      "main": [
+        [
+          {
+            "node": "Normalize Email Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Email Fields": {
+      "main": [
+        [
+          {
+            "node": "LLM: Priority Evaluator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup: Existing dedupeKey": {
+      "main": [
+        [
+          {
+            "node": "Is Duplicate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Duplicate?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Classification Defaults",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classification Defaults": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM: Priority Evaluator": {
+      "main": [
+        [
+          {
+            "node": "Parse LLM Priority JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse LLM Priority JSON": {
+      "main": [
+        [
+          {
+            "node": "LLM – Smart Classifier + Summarizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse LLM Classification JSON": {
+      "main": [
+        [
+          {
+            "node": "Lookup: Existing dedupeKey",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM – Smart Classifier + Summarizer": {
+      "main": [
+        [
+          {
+            "node": "Parse LLM Classification JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Needs Reminder?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs Reminder?": {
+      "main": [
+        [
+          {
+            "node": "Telegram Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1fe14f58-83c5-403a-a3d2-c8746d10126c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9c8d0d4640139c59e2bc183c0a14df0fbc0573cb91e494f5db8144fe78fe28ca"
+  },
+  "id": "DKu7PDZQB4PJeh3A",
+  "tags": []
+}
