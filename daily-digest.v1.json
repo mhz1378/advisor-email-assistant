@@ -55,7 +55,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const rows = items.map(i => i.json);\nconst total = rows.length;\nconst high = rows.filter(r => Number(r.priority) >= 4).length;\nconst pending = rows.filter(r => r.subTag === 'Action Required').length;\n\nreturn [{\n  json: {\n    total,\n    high,\n    pending,\n    categories: [...new Set(rows.map(r => r.category))].join(', '),\n  }\n}];\n"
+        "jsCode": "const now = Date.now();\nconst cutoff = now - 24 * 60 * 60 * 1000; // 24 hours ago\n\n// Only include rows whose receivedAt is within the last 24h\nconst rows = items\n  .map(i => i.json)\n  .filter(r => {\n    const date = new Date(r.receivedAt || 0).getTime();\n    return !isNaN(date) && date >= cutoff;\n  });\n\nconst total = rows.length;\nconst high = rows.filter(r => Number(r.priority) >= 4).length;\nconst pending = rows.filter(r => r.subTag === 'Action Required').length;\nconst categories = [...new Set(rows.map(r => r.category))].join(', ');\n\n// Add readable date for logging\nconst today = new Date().toLocaleDateString('en-US', { \n  year: 'numeric', month: 'short', day: 'numeric' \n});\n\nreturn [{\n  json: { total, high, pending, categories, date: today }\n}];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -85,9 +85,25 @@
         },
         "columns": {
           "mappingMode": "defineBelow",
-          "value": {},
+          "value": {
+            "Total emails": "={{ $('Aggregate Statistics').item.json.total }}",
+            "Categories today": "={{ $('Aggregate Statistics').item.json.categories }}",
+            "Pending (Action Required)": "={{ $('Aggregate Statistics').item.json.pending }}",
+            "High priority": "={{ $('Aggregate Statistics').item.json.high }}",
+            "Date": "={{ $('Aggregate Statistics').item.json.date }}"
+          },
           "matchingColumns": [],
           "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
             {
               "id": "Total emails",
               "displayName": "Total emails",
@@ -152,7 +168,7 @@
     {
       "parameters": {
         "chatId": "=74166550",
-        "text": "=🌅 *Daily Email Digest*\nTotal emails: {{$json.total}}\nHigh priority: {{$json.high}}\nPending (Action Required): {{$json.pending}}\nCategories today: {{$json.categories}}\n",
+        "text": "=🌅 *Daily Email Digest*\nDate: {{ $json.date }}\nTotal emails: {{$json.total}}\nHigh priority: {{$json.high}}\nPending (Action Required): {{$json.pending}}\nCategories today: {{$json.categories}}\n",
         "additionalFields": {
           "appendAttribution": false
         }
@@ -225,7 +241,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "9182b3f9-45f5-4fa8-8ecb-b7a6af3591dc",
+  "versionId": "0782f50a-6cc8-42e9-a20e-27b2871d87cd",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "9c8d0d4640139c59e2bc183c0a14df0fbc0573cb91e494f5db8144fe78fe28ca"
